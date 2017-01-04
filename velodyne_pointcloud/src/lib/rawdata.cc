@@ -192,7 +192,11 @@ namespace velodyne_rawdata
              || raw->blocks[i].rotation >= config_.min_angle))){
           float distance = tmp.uint * DISTANCE_RESOLUTION;
           distance += corrections.dist_correction;
-  
+
+          // skip if point is out of range
+          if (!pointInRange(distance))
+            continue;
+
           float cos_vert_angle = corrections.cos_vert_correction;
           float sin_vert_angle = corrections.sin_vert_correction;
           float cos_rot_correction = corrections.cos_rot_correction;
@@ -288,20 +292,17 @@ namespace velodyne_rawdata
           intensity = (intensity < min_intensity) ? min_intensity : intensity;
           intensity = (intensity > max_intensity) ? max_intensity : intensity;
   
-          if (pointInRange(distance)) {
-  
-            // convert polar coordinates to Euclidean XYZ
-            VPoint point;
-            point.ring = corrections.laser_ring;
-            point.x = x_coord;
-            point.y = y_coord;
-            point.z = z_coord;
-            point.intensity = intensity;
-  
-            // append this point to the cloud
-            pc.points.push_back(point);
-            ++pc.width;
-          }
+          // convert polar coordinates to Euclidean XYZ
+          VPoint point;
+          point.ring = corrections.laser_ring;
+          point.x = x_coord;
+          point.y = y_coord;
+          point.z = z_coord;
+          point.intensity = intensity;
+
+          // append this point to the cloud
+          pc.points.push_back(point);
+          ++pc.width;
         }
       }
     }
@@ -372,7 +373,11 @@ namespace velodyne_rawdata
             // convert polar coordinates to Euclidean XYZ
             float distance = tmp.uint * DISTANCE_RESOLUTION;
             distance += corrections.dist_correction;
-            
+
+            // skip if point is out of range
+            if (!pointInRange(distance))
+              continue;
+
             float cos_vert_angle = corrections.cos_vert_correction;
             float sin_vert_angle = corrections.sin_vert_correction;
             float cos_rot_correction = corrections.cos_rot_correction;
@@ -467,20 +472,17 @@ namespace velodyne_rawdata
             intensity = (intensity < min_intensity) ? min_intensity : intensity;
             intensity = (intensity > max_intensity) ? max_intensity : intensity;
     
-            if (pointInRange(distance)) {
-    
-              // append this point to the cloud
-              VPoint point;
-              point.ring = corrections.laser_ring;
-              point.x = x_coord;
-              point.y = y_coord;
-              point.z = z_coord;
-              point.intensity = intensity;
-              point.distance = distance;
+            // append this point to the cloud
+            VPoint point;
+            point.ring = corrections.laser_ring;
+            point.x = x_coord;
+            point.y = y_coord;
+            point.z = z_coord;
+            point.intensity = intensity;
+            point.distance = distance;
 
-              pc.points.push_back(point);
-              ++pc.width;
-            }
+            pc.points.push_back(point);
+            ++pc.width;
           }
         }
       }
