@@ -476,6 +476,7 @@ namespace velodyne_rawdata
               point.y = y_coord;
               point.z = z_coord;
               point.intensity = intensity;
+              point.distance = distance;
 
               pc.points.push_back(point);
               ++pc.width;
