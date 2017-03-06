@@ -55,6 +55,7 @@ private:
     int    npackets;                 ///< number of packets to collect
     double rpm;                      ///< device rotation rate (RPMs)
     double time_offset;              ///< time in seconds added to each velodyne time stamp
+    int cut_angle;                   ///< cutting angle in 1/100°
   } config_;
 
   boost::shared_ptr<Input> input_;
