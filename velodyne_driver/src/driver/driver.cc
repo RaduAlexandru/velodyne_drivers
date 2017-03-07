@@ -43,33 +43,33 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 
   // get model name, validate string, determine packet rate
   private_nh.param("model", config_.model, std::string("64E"));
-  double packet_rate;                   // packet frequency (Hz)
+  
   std::string model_full_name;
   if ((config_.model == "64E_S2") || 
       (config_.model == "64E_S2.1"))    // generates 1333312 points per second
     {                                   // 1 packet holds 384 points
-      packet_rate = 3472.17;            // 1333312 / 384
+      packet_rate_ = 3472.17;            // 1333312 / 384
       model_full_name = std::string("HDL-") + config_.model;
     }
   else if (config_.model == "64E")
     {
-      packet_rate = 2600.0;
+      packet_rate_ = 2600.0;
       model_full_name = std::string("HDL-") + config_.model;
     }
   else if (config_.model == "32E")
     {
-      packet_rate = 1808.0;
+      packet_rate_ = 1808.0;
       model_full_name = std::string("HDL-") + config_.model;
     }
   else if (config_.model == "VLP16")
     {
-      packet_rate = 754;             // 754 Packets/Second for Last or Strongest mode 1508 for dual (VLP-16 User Manual)
+      packet_rate_ = 754;             // 754 Packets/Second for Last or Strongest mode 1508 for dual (VLP-16 User Manual)
       model_full_name = "VLP-16";
     }
   else
     {
       ROS_ERROR_STREAM("unknown Velodyne LIDAR model: " << config_.model);
-      packet_rate = 2600.0;
+      packet_rate_ = 2600.0;
     }
   std::string deviceName(std::string("Velodyne ") + model_full_name);
 
@@ -80,7 +80,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 
   // default number of packets for each scan is a single revolution
   // (fractions rounded up)
-  config_.npackets = (int) ceil(packet_rate / frequency);
+  config_.npackets = (int) ceil(packet_rate_ / frequency);
   private_nh.getParam("npackets", config_.npackets);
   ROS_INFO_STREAM("publishing " << config_.npackets << " packets per scan");
 
@@ -105,7 +105,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
 
   // initialize diagnostics
   diagnostics_.setHardwareID(deviceName);
-  const double diag_freq = packet_rate/config_.npackets;
+  const double diag_freq = packet_rate_/config_.npackets;
   diag_max_freq_ = diag_freq;
   diag_min_freq_ = diag_freq;
   ROS_INFO("expected frequency: %.3f (Hz)", diag_freq);
@@ -122,7 +122,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
     {
       // read data from packet capture file
       input_.reset(new velodyne_driver::InputPCAP(private_nh, udp_port,
-                                                  packet_rate, dump_file));
+                                                  packet_rate_, dump_file));
     }
   else
     {
@@ -148,9 +148,18 @@ bool VelodyneDriver::spinRateServiceCall(velodyne_msgs::LaserSpeed::Request& req
   else if (speed < 300)
     speed = 300;
   res.speed = speed;
-  setSpinRate(speed);
+  
   ros::NodeHandle nh("~");
   nh.setParam(LASER_SPEED_PARAMETER, speed);
+  
+  config_.rpm = speed;
+  setSpinRate(config_.rpm);
+  ROS_INFO_STREAM("setting velodyne spinrate to " << config_.rpm << " RPM");
+  double frequency = (config_.rpm / 60.0);     // expected Hz rate
+  
+  // default number of packets for each scan is a single revolution
+  // (fractions rounded up)
+  config_.npackets = (int) ceil(packet_rate_ / frequency);
   return true;
 }
 

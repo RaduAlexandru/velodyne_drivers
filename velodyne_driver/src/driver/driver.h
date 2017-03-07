@@ -77,6 +77,8 @@ private:
   double diag_min_freq_;
   double diag_max_freq_;
   boost::shared_ptr<diagnostic_updater::TopicDiagnostic> diag_topic_;
+  
+  double packet_rate_;
 };
 
 } // namespace velodyne_driver
