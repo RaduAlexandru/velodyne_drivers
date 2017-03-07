@@ -29,6 +29,7 @@
     <arg name="read_once" value="$(arg read_once)"/>
     <arg name="repeat_delay" value="$(arg repeat_delay)"/>
     <arg name="rpm" value="$(arg rpm)"/>
+    <arg name="cut_angle" value="180"/>
   </include>
 
   <!-- start cloud nodelet -->
