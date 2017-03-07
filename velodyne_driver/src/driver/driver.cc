@@ -233,10 +233,11 @@ bool VelodyneDriver::poll(void)
 {
   // Allocate a new shared pointer for zero-copy sharing with other nodelets.
   velodyne_msgs::VelodyneScanPtr scan(new velodyne_msgs::VelodyneScan);
-
+  int n_packets = config_.npackets;
+  
   if( config_.cut_angle >= 0) //Cut at specific angle feature enabled
   {
-    scan->packets.reserve(config_.npackets);
+    scan->packets.reserve(n_packets);
     velodyne_msgs::VelodynePacket tmp_packet;
     while(true)
     {
@@ -270,8 +271,8 @@ bool VelodyneDriver::poll(void)
   {
     // Since the velodyne delivers data at a very high rate, keep
     // reading and publishing scans as fast as possible.
-    scan->packets.resize(config_.npackets);
-    for (int i = 0; i < config_.npackets; ++i)
+    scan->packets.resize(n_packets);
+    for (int i = 0; i < n_packets; ++i)
     {
       while (true)
       {
