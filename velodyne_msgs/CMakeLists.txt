@@ -9,6 +9,12 @@ add_message_files(
   VelodynePacket.msg
   VelodyneScan.msg
 )
+
+add_service_files(
+  FILES
+  LaserSpeed.srv
+) 
+
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(

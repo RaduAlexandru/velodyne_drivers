@@ -23,6 +23,7 @@
 
 #include <velodyne_driver/input.h>
 #include <velodyne_driver/VelodyneNodeConfig.h>
+#include <velodyne_msgs/LaserSpeed.h>
 
 namespace velodyne_driver
 {
@@ -36,8 +37,16 @@ public:
   ~VelodyneDriver() {}
 
   bool poll(void);
-
+  
+  bool setSpinRate(int rate);
+ 
 private:
+  
+  const std::string LASER_SPEED_PARAMETER = "laser_speed";
+  
+  
+  bool spinRateServiceCall(velodyne_msgs::LaserSpeed::Request& req,
+                           velodyne_msgs::LaserSpeed::Response& res);
 
   ///Callback for dynamic reconfigure
   void callback(velodyne_driver::VelodyneNodeConfig &config,
@@ -61,6 +70,8 @@ private:
   boost::shared_ptr<Input> input_;
   ros::Publisher output_;
 
+  ros::ServiceServer spin_rate_server_;
+  
   /** diagnostics updater */
   diagnostic_updater::Updater diagnostics_;
   double diag_min_freq_;

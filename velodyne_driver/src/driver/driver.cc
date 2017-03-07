@@ -21,6 +21,14 @@
 
 #include "driver.h"
 
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/streambuf.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/asio/write.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/read_until.hpp>
+
 namespace velodyne_driver
 {
 
@@ -66,6 +74,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   std::string deviceName(std::string("Velodyne ") + model_full_name);
 
   private_nh.param("rpm", config_.rpm, 600.0);
+  setSpinRate(config_.rpm);
   ROS_INFO_STREAM(deviceName << " rotating at " << config_.rpm << " RPM");
   double frequency = (config_.rpm / 60.0);     // expected Hz rate
 
@@ -81,6 +90,7 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   double cut_angle;
   private_nh.param("cut_angle", cut_angle, -0.01);
   config_.cut_angle = int(cut_angle*100);
+  ROS_INFO_STREAM("cat_angle: " << cut_angle);
   
   int udp_port;
   private_nh.param("port", udp_port, (int) DATA_PORT_NUMBER);
@@ -123,7 +133,88 @@ VelodyneDriver::VelodyneDriver(ros::NodeHandle node,
   // raw packet output topic
   output_ =
     node.advertise<velodyne_msgs::VelodyneScan>("velodyne_packets", 10);
+    
+    
+    spin_rate_server_ = node.advertiseService("spin_rate", &VelodyneDriver::spinRateServiceCall, this);
+    
 }
+
+bool VelodyneDriver::spinRateServiceCall(velodyne_msgs::LaserSpeed::Request& req,
+                         velodyne_msgs::LaserSpeed::Response& res)
+{
+  int speed = req.speed;
+  if (speed > 1200)
+    speed = 1200;
+  else if (speed < 300)
+    speed = 300;
+  res.speed = speed;
+  setSpinRate(speed);
+  ros::NodeHandle nh("~");
+  nh.setParam(LASER_SPEED_PARAMETER, speed);
+  return true;
+}
+
+
+bool VelodyneDriver::setSpinRate(int rate)
+{
+  boost::asio::io_service io_service;
+  
+  boost::asio::ip::tcp::resolver resolver(io_service);
+  boost::asio::ip::tcp::resolver::query query("192.168.1.201",  "80"); // "http");
+  boost::asio::ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+  boost::asio::ip::tcp::resolver::iterator end;
+  
+  boost::asio::ip::tcp::socket socket(io_service);
+  boost::system::error_code error = boost::asio::error::host_not_found;
+  while (error && endpoint_iterator != end)
+  {
+    socket.close();
+    socket.connect(*endpoint_iterator++, error);
+  }
+  if (error)
+    throw boost::system::system_error(error);
+  
+  boost::asio::streambuf request;
+  std::ostream request_stream(&request);
+  
+  std::stringstream ss_to_send;
+  ss_to_send << "rpm=";
+  ss_to_send << rate; 
+  ss_to_send << "\r\n";
+  
+  request_stream << "POST /cgi/setting HTTP/1.1\r\n";
+  request_stream << "Host: localhost:8080\r\n";
+  request_stream << "Connection: keep-alive\r\n";
+  request_stream << "Content-Length: " <<  ss_to_send.str().length() << "\r\n";
+  request_stream << "Cache-Control: max-age=0\r\n";
+  request_stream << "Origin: http://localhost:8080\r\n";
+  request_stream << "Upgrade-Insecure-Requests: 1\r\n";
+  request_stream << "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36\r\n";
+  request_stream << "Content-Type: application/x-www-form-urlencoded\r\n";
+  request_stream << "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8\r\n";
+  request_stream << "DNT: 1\r\n";
+  request_stream << "Referer: http://localhost:8080/\r\n";
+  request_stream << "Accept-Encoding: gzip, deflate, br\r\n";
+  request_stream << "Accept-Language: de-DE,de;q=0.8,en-US;q=0.6,en;q=0.4\r\n";
+  request_stream << "Cookie: org.cups.sid=772f03e1c42a7aff8df36a923bf4baf0; JSESSIONID.cdfec8e2=tcyr0fa105ar13hs51s60dbon; screenResolution=1920x1080; QT=1487290972991; SESSION=0510bf26-2b9c-46c1-ba02-f3b1a88ffc1c\r\n";
+  request_stream << "\r\n";    
+  request_stream << ss_to_send.str();
+  request_stream << "\r\n";
+  
+  try
+  {
+    // Send the request.
+    boost::asio::write(socket, request);
+    
+    boost::asio::streambuf response;
+    boost::asio::read_until(socket, response, "\r\n");
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << e.what() << std::endl;
+  }
+}
+
 
 /** poll the device
  *
