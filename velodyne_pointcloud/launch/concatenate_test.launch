@@ -1,0 +1,38 @@
+<!--  -->
+<launch>
+
+    <!-- ========= Bagplayer ========== -->
+    <arg name="use_bag" default="true"/>
+    <arg name="bagname" default="/home/razlaw/bags/velodyne_2017-07-04-13-34-38.bag"/>
+    <arg name="rate" default="0.01"/>
+    <arg name="start" default="20"/>
+
+    <node if="$(arg use_bag)" pkg="rosbag" type="play" name="play" args="--clock -r $(arg rate) -s $(arg start) $(arg bagname)" output="screen" respawn="false" >
+        <remap from="/velodyne_points" to="/velodyne_points_frombag" />
+        <!--<remap from="/tf" to="/tf_frombag" />-->
+    </node>
+
+    <!-- ============= Pointcloud Conversion (incl. nodelet_manager) =============  -->
+    <!-- declare arguments with default values -->
+    <arg name="calibration" default="$(find velodyne_pointcloud)/params/VLP16db.yaml"/>
+    <arg name="min_range" default="0.01" />
+    <arg name="max_range" default="130.0" />
+    <arg name="frame_id" default="odom" />
+
+    <node pkg="nodelet" type="nodelet" name="velodyne_nodelet_manager"
+          args="manager" output="screen" />
+
+    <node pkg="nodelet" type="nodelet" name="concatenate_nodelet"
+          args="load velodyne_pointcloud/ConcatenateNodelet velodyne_nodelet_manager"  output="screen">
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="transform_nodelet"
+          args="load velodyne_pointcloud/TransformNodelet velodyne_nodelet_manager"  output="screen">
+        <param name="calibration" value="$(arg calibration)"/>
+        <param name="min_range" value="$(arg min_range)"/>
+        <param name="max_range" value="$(arg max_range)"/>
+        <param name="frame_id" value="$(arg frame_id)"/>
+        <param name="input_topic" value="velodyne_concatenated_packets"/>
+    </node>
+
+</launch>
