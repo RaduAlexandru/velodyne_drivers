@@ -43,3 +43,8 @@ install(TARGETS transform_nodelet
         RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})
+
+add_executable(concatenater concatenater.cc)
+add_dependencies(concatenater ${${PROJECT_NAME}_EXPORTED_TARGETS})
+target_link_libraries(concatenater velodyne_rawdata
+        ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
