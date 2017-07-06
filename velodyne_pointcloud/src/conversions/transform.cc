@@ -41,9 +41,12 @@ namespace velodyne_pointcloud
       CallbackType f;
     f = boost::bind (&Transform::reconfigure_callback, this, _1, _2);
     srv_->setCallback (f);
-    
+
+    std::string input_topic = "velodyne_packets";
+    private_nh.getParam("input_topic", input_topic);
+
     // subscribe to VelodyneScan packets using transform filter
-    velodyne_scan_.subscribe(node, "velodyne_packets", 10);
+    velodyne_scan_.subscribe(node, input_topic, 10);
     tf_filter_ =
       new tf::MessageFilter<velodyne_msgs::VelodyneScan>(velodyne_scan_,
                                                          listener_,
