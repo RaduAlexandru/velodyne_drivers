@@ -29,13 +29,3 @@
     </description>
   </class>
 </library>
-
-<library path="lib/libconcatenate_nodelet">
-<class name="velodyne_pointcloud/ConcatenateNodelet"
-       type="velodyne_pointcloud::ConcatenateNodelet"
-       base_class_type="nodelet::Nodelet">
-  <description>
-    Concatenate multiple packets.
-  </description>
-</class>
-</library>
