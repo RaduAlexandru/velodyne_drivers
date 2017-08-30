@@ -53,13 +53,13 @@ namespace velodyne_pointcloud
                                                          config_.frame_id, 10);
     tf_filter_->registerCallback(boost::bind(&Transform::processScan, this, _1));
   }
-  
+
   void Transform::reconfigure_callback(
       velodyne_pointcloud::TransformNodeConfig &config, uint32_t level)
   {
     ROS_INFO_STREAM("Reconfigure request.");
-    data_->setParameters(config.min_range, config.max_range, 
-                         config.view_direction, config.view_width);
+    data_->setParameters(config.min_range, config.max_range,
+                         config.view_direction, config.view_width, config.organize_cloud);
     config_.frame_id = tf::resolve(tf_prefix_, config.frame_id);
     ROS_INFO_STREAM("Target frame ID: " << config_.frame_id);
   }

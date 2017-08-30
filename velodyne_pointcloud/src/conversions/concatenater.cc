@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   boost::shared_ptr<velodyne_rawdata::RawData> data(new velodyne_rawdata::RawData());
   std::string pkg_path = ros::package::getPath("velodyne_pointcloud");
   data->setupOffline(pkg_path + "/params/VLP16db.yaml", 130.0, 0.1);
-  data->setParameters(0.1, 130.0, 0.0, 0.0);
+  data->setParameters(0.1, 130.0, 0.0, 0.0, false);
 
   int last_base_rotation = -1;
   int cut_angle = 0;
