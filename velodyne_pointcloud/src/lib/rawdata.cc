@@ -187,7 +187,7 @@ namespace velodyne_rawdata
 
 
       // the map is used, only if the organize_cloud feature is activated.
-      std::map<uint16_t, VPoint> organized_lasers;
+      std::map<uint16_t, VPoint*> organized_lasers;
 
 
       for (int j = 0, k = 0; j < SCANS_PER_BLOCK; j++, k += RAW_SCAN_SIZE) {
@@ -312,24 +312,24 @@ namespace velodyne_rawdata
        */
        if (config_.organize_cloud) {
              uint16_t ring = corrections.laser_ring;
-             VPoint point;
+             VPoint* point_ptr = new VPoint;
              /** The laser values are not ordered, the organized structure
               * needs ordered neighbour points. The right order is defined
               * by the laser_ring value. First collect each laser point
               * and insert them into a map, ordered by the ring number
               */
-             organized_lasers[ring] = point;
-             point.ring = corrections.laser_ring;
+             organized_lasers[ring] = point_ptr;
+             point_ptr->ring = corrections.laser_ring;
              if (pointInRange(distance)) {
-               point.x = x_coord;
-               point.y = y_coord;
-               point.z = z_coord;
-               point.intensity = (uint8_t) intensity;
+               point_ptr->x = x_coord;
+               point_ptr->y = y_coord;
+               point_ptr->z = z_coord;
+               point_ptr->intensity = (uint8_t) intensity;
              }else{
-               point.x = nan("");
-               point.y = nan("");
-               point.z = nan("");
-               point.intensity = 0;
+               point_ptr->x = nan("");
+               point_ptr->y = nan("");
+               point_ptr->z = nan("");
+               point_ptr->intensity = 0;
              }
            }
            // cloud should not be organized
@@ -349,8 +349,9 @@ namespace velodyne_rawdata
          if(config_.organize_cloud){
            // insert sorted points
            for (int j = 0; j < SCANS_PER_BLOCK; j++) {
-             VPoint point = organized_lasers[j];
-             pc.points.push_back(point);
+             VPoint* point = organized_lasers[j];
+             pc.points.push_back(*point);
+             delete point;
            }
            // if the cloud should be organized, we have to increment
            // the cloud height for every scan row
@@ -407,7 +408,7 @@ namespace velodyne_rawdata
       }
 
       // the map is used, only if the organize_cloud feature is activated.
-      std::map<uint16_t, VPoint> organized_lasers;
+      std::map<uint16_t, VPoint*> organized_lasers;
 
 
       for (int firing=0, k=0; firing < VLP16_FIRINGS_PER_BLOCK; firing++){
@@ -549,24 +550,24 @@ namespace velodyne_rawdata
 
             if (config_.organize_cloud) {
                   uint16_t ring = corrections.laser_ring;
-                  VPoint point;
+                  VPoint* point_ptr = new VPoint;
                   /** The laser values are not ordered, the organized structure
                    * needs ordered neighbour points. The right order is defined
                    * by the laser_ring value. First collect each laser point
                    * and insert them into a map, ordered by the ring number
                    */
-                  organized_lasers[ring] = point;
-                  point.ring = corrections.laser_ring;
+                  organized_lasers[ring] = point_ptr;
+                  point_ptr->ring = corrections.laser_ring;
                   if (pointInRange(distance)) {
-                    point.x = x_coord;
-                    point.y = y_coord;
-                    point.z = z_coord;
-                    point.intensity = (uint8_t) intensity;
+                    point_ptr->x = x_coord;
+                    point_ptr->y = y_coord;
+                    point_ptr->z = z_coord;
+                    point_ptr->intensity = (uint8_t) intensity;
                   }else{
-                    point.x = nan("");
-                    point.y = nan("");
-                    point.z = nan("");
-                    point.intensity = 0;
+                    point_ptr->x = nan("");
+                    point_ptr->y = nan("");
+                    point_ptr->z = nan("");
+                    point_ptr->intensity = 0;
                   }
                 }
                 // cloud should not be organized
@@ -589,18 +590,21 @@ namespace velodyne_rawdata
 
 
         }
+
+        if(config_.organize_cloud){
+          // insert sorted points
+          for (int j = 0; j < VLP16_SCANS_PER_FIRING; j++) {
+            VPoint* point = organized_lasers[j];
+            pc.points.push_back(*point);
+            delete point;
+          }
+          // if the cloud should be organized, we have to increment
+          // the cloud height for every scan row
+          pc.height++;
+        }
       }
 
-      if(config_.organize_cloud){
-        // insert sorted points
-        for (int j = 0; j < VLP16_SCANS_PER_FIRING; j++) {
-          VPoint point = organized_lasers[j];
-          pc.points.push_back(point);
-        }
-        // if the cloud should be organized, we have to increment
-        // the cloud height for every scan row
-        pc.height++;
-      }
+
 
 
     }
