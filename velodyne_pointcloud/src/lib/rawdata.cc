@@ -430,7 +430,7 @@ namespace velodyne_rawdata
           */
           if ((azimuth_corrected < config_.min_angle
                || azimuth_corrected > config_.max_angle
-               || azimuth_corrected >= config_.max_angle)
+               || config_.min_angle >= config_.max_angle)
              && (config_.min_angle <= config_.max_angle
                || (azimuth_corrected > config_.max_angle
                  && azimuth_corrected < config_.min_angle))){
