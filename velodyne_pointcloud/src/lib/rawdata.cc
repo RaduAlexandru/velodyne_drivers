@@ -535,18 +535,6 @@ namespace velodyne_rawdata
           intensity = (intensity < min_intensity) ? min_intensity : intensity;
           intensity = (intensity > max_intensity) ? max_intensity : intensity;
 
-          // // append this point to the cloud
-          // VPoint point;
-          // point.ring = corrections.laser_ring;
-          // point.x = x_coord;
-          // point.y = y_coord;
-          // point.z = z_coord;
-          // point.intensity = intensity;
-          // point.distance = distance;
-          //
-          // pc.points.push_back(point);
-          // ++pc.width;
-
           if (config_.organize_cloud) {
             uint16_t ring = corrections.laser_ring;
             VPoint* point_ptr = new VPoint;
@@ -562,11 +550,13 @@ namespace velodyne_rawdata
               point_ptr->y = y_coord;
               point_ptr->z = z_coord;
               point_ptr->intensity = (uint8_t) intensity;
+              point_ptr->distance = distance;
             }else{
               point_ptr->x = nan("");
               point_ptr->y = nan("");
               point_ptr->z = nan("");
               point_ptr->intensity = 0;
+              point_ptr->distance = nan("");
             }
           }
           // cloud should not be organized
@@ -577,6 +567,7 @@ namespace velodyne_rawdata
             point.y = y_coord;
             point.z = z_coord;
             point.intensity = (uint8_t) intensity;
+            point.distance = distance;
 
             // append this point to the cloud
             pc.points.push_back(point);
