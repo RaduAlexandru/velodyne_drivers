@@ -354,14 +354,14 @@ namespace velodyne_rawdata
              delete point;
            }
            // if the cloud should be organized, we have to increment
-           // the cloud height for every scan row
-           pc.height++;
+           // the cloud width for every scan row
+           pc.width++;
          }
        }
 
        // set the cloud height
        if(config_.organize_cloud){
-         pc.width = SCANS_PER_BLOCK;
+         pc.height = SCANS_PER_BLOCK;
        // point cloud height 1 for unorganized clouds.
        }else{
          pc.height = 1;
