@@ -434,6 +434,19 @@ namespace velodyne_rawdata
              && (config_.min_angle <= config_.max_angle
                || (azimuth_corrected > config_.max_angle
                  && azimuth_corrected < config_.min_angle))){
+                    if (config_.organize_cloud){
+                        // organized_lasers[corrections.laser_ring]=nullptr;
+                        uint16_t ring = corrections.laser_ring;
+                        VPoint* point_ptr = new VPoint;
+                        organized_lasers[ring] = point_ptr;
+                        point_ptr->ring = corrections.laser_ring;
+                        point_ptr->x = nan("");
+                        point_ptr->y = nan("");
+                        point_ptr->z = nan("");
+                        point_ptr->intensity = 0;
+                        point_ptr->distance = nan("");
+                    }
+
            continue;
           }
 
