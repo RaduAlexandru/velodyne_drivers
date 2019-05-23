@@ -6,11 +6,13 @@
 #include <rosbag/view.h>
 
 #include <boost/foreach.hpp>
+#include <boost/program_options.hpp>
 #include <velodyne_pointcloud/rawdata.h>
 #include <velodyne_pointcloud/point_types.h>
 
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
+
 
 int main(int argc, char **argv)
 {
@@ -18,19 +20,42 @@ int main(int argc, char **argv)
   ros::NodeHandle node;
   ros::NodeHandle priv_nh("~");
 
-  std::string input_bag = "";
-  if(!priv_nh.getParam("input_bag", input_bag))
-  {
-    ROS_ERROR_STREAM("Concatenator: Bag file cannot be opened. Path to input bag is " << input_bag);
-    return -1;
-  }
 
-  std::string output_bag = "";
-  if(!priv_nh.getParam("output_bag", output_bag))
+  namespace po = boost::program_options;
+
+  po::options_description desc("Options");
+  desc.add_options()
+      ("help", "This help message")
+      ("input_bag", po::value<std::string>(), "Input bagfile")
+      ("output_bag", po::value<std::string>(), "Output bagfile")
+      ("min_range", po::value<double>()->default_value(0.1), "Min range")
+      ("max_range", po::value<double>()->default_value(130), "Max range")
+  ;
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv,desc,po::command_line_style::unix_style ^ po::command_line_style::allow_short), vm);
+  po::notify(vm);
+
+  if(vm.count("help"))
   {
-    ROS_ERROR_STREAM("Concatenator: Bag file cannot be opened. Path to output bag is " << output_bag);
+      ROS_INFO_STREAM(desc);
+      return 1;
+  }
+  if(!vm.count("input_bag"))
+  {
+    ROS_ERROR_STREAM("Concatenator: input bag file not given.");
+    ROS_INFO_STREAM(desc);
     return -1;
   }
+  std::string input_bag = vm["input_bag"].as<std::string>();
+  if(!vm.count("output_bag"))
+  {
+    ROS_ERROR_STREAM("Concatenator: output bag file not given.");
+    ROS_INFO_STREAM(desc);
+    return -1;
+  }
+  std::string output_bag = vm["output_bag"].as<std::string>();
+  double min_range = vm["min_range"].as<double>();
+  double max_range = vm["max_range"].as<double>();
 
   rosbag::Bag bag_read;
   rosbag::Bag bag_write;
@@ -46,8 +71,8 @@ int main(int argc, char **argv)
 
   boost::shared_ptr<velodyne_rawdata::RawData> data(new velodyne_rawdata::RawData());
   std::string pkg_path = ros::package::getPath("velodyne_pointcloud");
-  data->setupOffline(pkg_path + "/params/VLP16db.yaml", 130.0, 0.1);
-  data->setParameters(0.1, 130.0, 0.0, 0.0, false);
+  data->setupOffline(pkg_path + "/params/VLP16db.yaml", max_range, min_range);
+  data->setParameters(min_range, max_range, 0.0, 0.0, false);
 
   int last_base_rotation = -1;
   int cut_angle = 0;
